@@ -13,12 +13,21 @@ namespace graphics {
 	class MeshRenderer
 	{
 	public:
-		MeshRenderer() {}
+		MeshRenderer();
 
-		void draw(const Mesh& _mesh, const Texture2D& _texture, const glm::mat4& _transform) {}
+		void draw(const Mesh& _mesh, const Texture2D& _texture, const glm::mat4& _transform);
 
-		void present(const Camera& _camera) {}
-		void clear() {}
+		void present(const Camera& _camera);
+		void clear();
+
 	private:
+		unsigned vao;
+		unsigned vbo;
+		mutable bool dirty;
+
+		std::vector<Mesh> meshes;
+		//std::vector<Texture2D::Handle> textures;
+		std::vector<glm::mat4> transforms;
+
 	};
 }
