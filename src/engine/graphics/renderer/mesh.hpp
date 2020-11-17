@@ -4,9 +4,18 @@
 
 namespace graphics {
 
+
 	class Mesh
 	{
 	public:
-		Mesh(const utils::MeshData& _meshData) {}
+		struct Vertex {
+			glm::vec3 Position;
+			glm::vec3 Normal;
+			glm::vec2 TexCoords;
+		};
+
+		Mesh(const utils::MeshData& _meshData);
+
+		std::vector<Vertex> vertices;
 	};
 }
