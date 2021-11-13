@@ -10,15 +10,14 @@ namespace utils {
      * @brief describes a single triangle strip of a mesh
      */
     struct TriangleStrip {
-        std::vector<int> vertexIndices = {};
-        std::vector<utils::MeshData::FaceData> triangles = {};
+        std::vector<utils::MeshData::FaceData::VertexIndices> vertexIndices = {};
 
         virtual ~TriangleStrip();
 
-        static TriangleStrip* create(utils::MeshData::FaceData face1, utils::MeshData::FaceData face2, std::array<int, 4> vertices);
+        static TriangleStrip* create(std::array<utils::MeshData::FaceData::VertexIndices, 4> vertices);
 
         static TriangleStrip*
-        create(utils::MeshData::FaceData face1, utils::MeshData::FaceData face2, utils::MeshData::FaceData face3, std::array<int, 5> vertices);
+        create(std::array<utils::MeshData::FaceData::VertexIndices, 5> vertices);
     };
 
     /**
