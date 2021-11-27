@@ -29,21 +29,35 @@ void main()
 {
     vec4 texColor = texture(tx_color, uv_coord_frag);
     vec4 phongData = texture(tx_phong, uv_coord_frag);
-    vec3 ambientColor = max(phongData.r * ambient_light, 0f);
+    vec3 ambientColor = max(phongData.r * ambient_light, 0.0f);
     vec3 diffuseColor;
     vec3 specularColor;
 
     // TODO light bounces? occlusion?
     if (light_type == LIGHT_TYPE_DIRECTIONAL){
         // direction, color, intensity
-        diffuseColor = max(phongData.g * dot(-light_direction, normal_vec_frag) * light_color, 0f) * light_intensity;
-        specularColor = max(phongData.b * 8 * pow(dot(reflect(light_direction, normal_vec_frag), normalize(camera_position - render_position_frag)), phongData.a * 255) * light_color, 0f) * light_intensity;
+        
+        float diffuseDot = max(dot(-light_direction, normal_vec_frag), 0.0f);
+        float specularDot = max(dot(reflect(light_direction, normal_vec_frag), normalize(camera_position - render_position_frag)), 0.0f);
+        diffuseColor = phongData.g * diffuseDot * light_color * light_intensity;
+        specularColor = phongData.b * 8 * pow(specularDot, phongData.a * 255) * light_color * light_intensity;
+        
     } else if (light_type == LIGHT_TYPE_SPOT){
         // TODO implement spot lights
     } else if (light_type == LIGHT_TYPE_POINT){
-        // TODO implement point lights
+        // position, range, color, intensity
+        // light intensity should diminish proportionally to `1 / distance_squared`
+        vec3 pointLightDirection = normalize(render_position_frag - light_position);
+        float lightDistance = length(render_position_frag - light_position);
+        if(lightDistance <= light_range){
+            float distanceFactor = 0.01f / pow(lightDistance / light_range, 2);
+            
+            float diffuseDot = max(dot(-pointLightDirection, normal_vec_frag), 0.0f);
+            float specularDot = max(dot(reflect(pointLightDirection, normal_vec_frag), normalize(camera_position - render_position_frag)), 0.0f);
+            diffuseColor = phongData.g * diffuseDot * light_color * light_intensity * distanceFactor;
+            specularColor = phongData.b * 8 * pow(specularDot, phongData.a * 255) * light_color * light_intensity * distanceFactor;
+        }
     }
 
-    out_color = texColor * vec4(ambientColor + diffuseColor + specularColor, 1f);
-    //out_color = vec4(specularColor, 1f);
+    out_color = texColor * vec4(ambientColor + diffuseColor + specularColor, 1.0f);
 }
