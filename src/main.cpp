@@ -43,20 +43,20 @@ int main(int argc, char *argv[]) {
             glm::normalize(glm::vec3(-1.0f, -1.0f, 0.5f)),
             glm::vec3(1.0f, 1.0f, 1.0f),
             2.0f);*/
-    /*graphics::LightData lightData = graphics::LightData::point(
-            glm::vec3(3.0f, 0.0f, 0.0f),
+    graphics::LightData lightData = graphics::LightData::point(
+            glm::vec3(0.0f, 0.0f, 0.0f),
             10.0f,
             glm::vec3(1.0f, 1.0f, 1.0f),
             5.0f
-    );*/
-    graphics::LightData lightData = graphics::LightData::spot(
+    );
+    /*graphics::LightData lightData = graphics::LightData::spot(
             glm::vec3(3.0f, 0.0f, 0.0f),
             glm::vec3(-1.0f, 0.0f, 0.0f),
             10.0f,
             10.0f,
             glm::vec3(1.0f, 1.0f, 1.0f),
             5.0f
-            );
+            );*/
 
     graphics::Camera camera(90.0f, 0.1f, 300.0f);
     camera.setPosition(glm::vec3(0.0f, 0.0f, -3.0f));
@@ -103,16 +103,12 @@ int main(int argc, char *argv[]) {
         currentCursorPos = input::InputManager::getCursorPos();
         graphics::glCall(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (input::InputManager::isKeyPressed(input::Key::T)) {
-            // TODO triangles
-        }
-        if (input::InputManager::isKeyPressed(input::Key::R)) {
-            // TODO rectangle
+        if (input::InputManager::isKeyPressed(input::Key::Num1)) {
             meshRenderer.clear();
             meshRenderer.draw(mesh, *crateTexture, *planetPhong, glm::translate(glm::identity<glm::mat4>(), glm::vec3(1.5f, 0.0f, 0.0f)));
             meshRenderer.draw(mesh, *planetTexture, *planetPhong, glm::translate(glm::identity<glm::mat4>(), glm::vec3(-1.5f, 0.0f, 0.0f)));
         }
-        if (input::InputManager::isKeyPressed(input::Key::S)) {
+        if (input::InputManager::isKeyPressed(input::Key::Num2)) {
             meshRenderer.clear();
             meshRenderer.draw(mesh, *planetTexture, *planetPhong, glm::identity<glm::mat4>());
         }
@@ -120,22 +116,22 @@ int main(int argc, char *argv[]) {
         float rightInput = 0.0f;
         float forwardInput = 0.0f;
         float upInput = 0.0f;
-        if (input::InputManager::isKeyPressed(input::Key::KP_8)) {
+        if (input::InputManager::isKeyPressed(input::Key::W)) {
             forwardInput += cameraStep;
         }
-        if (input::InputManager::isKeyPressed(input::Key::KP_2)) {
+        if (input::InputManager::isKeyPressed(input::Key::S)) {
             forwardInput -= cameraStep;
         }
-        if (input::InputManager::isKeyPressed(input::Key::KP_6)) {
+        if (input::InputManager::isKeyPressed(input::Key::D)) {
             rightInput += cameraStep;
         }
-        if (input::InputManager::isKeyPressed(input::Key::KP_4)) {
+        if (input::InputManager::isKeyPressed(input::Key::A)) {
             rightInput -= cameraStep;
         }
-        if (input::InputManager::isKeyPressed(input::Key::KP_9)) {
+        if (input::InputManager::isKeyPressed(input::Key::E)) {
             upInput += cameraStep;
         }
-        if (input::InputManager::isKeyPressed(input::Key::KP_3)) {
+        if (input::InputManager::isKeyPressed(input::Key::Q)) {
             upInput -= cameraStep;
         }
         camera.moveRelative(rightInput, upInput, forwardInput);
