@@ -51,11 +51,13 @@ struct VertexData {
     glm::vec3 normalData;
 };
 
-struct LightData {
-    inline static const int LIGHT_TYPE_DIRECTIONAL = 0;
-    inline static const int LIGHT_TYPE_SPOT = 1;
-    inline static const int LIGHT_TYPE_POINT = 2;
+enum LightType : int {
+    directional = 0,
+    spot = 1,
+    point = 2
+};
 
+struct LightData {
     /**
      * Directional Light:
      *   position     -
@@ -80,7 +82,7 @@ struct LightData {
      *   intensity    resulting light-intensity at a given point is `intensity * ( 1 - ([point_to_light_distance] / [range]) )²`
      */
 
-    int light_type;
+    LightType light_type;
     glm::vec3 light_position;
     glm::vec3 light_direction;
     float light_range;
@@ -104,15 +106,15 @@ int main(int argc, char *argv[]) {
     input::InputManager::initialize(window);
     input::InputManager::setCursorMode(input::InputManager::CursorMode::NORMAL);
 
-    glm::vec3 ambientLightData = {0.3f, 0.3f, 0.3f};
+    glm::vec3 ambientLightData = {0.7f, 0.7f, 0.7f};
     // TODO create light type specific constructors
     LightData lightData = {
-            LightData::LIGHT_TYPE_DIRECTIONAL,
+            LightType::directional,
             glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::normalize(glm::vec3(-1.0f, -1.0f, 0.0f)),
+            glm::normalize(glm::vec3(-1.0f, -1.0f, 0.5f)),
             0.0f, 0.0f,
             glm::vec3(1.0f, 1.0f, 1.0f),
-            1.0f
+            2.0f
     };
 
     graphics::Camera camera(90.0f, 0.1f, 300.0f);
@@ -147,15 +149,15 @@ int main(int argc, char *argv[]) {
     };
 
     VertexData triangles_tri[] = {
-            {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(-1.0f, -1.0f)},
-            {glm::vec3(1.0f, -1.0f, 0.0f),  glm::vec2(1.0f, -1.0f)},
-            {glm::vec3(0.0f, 1.0f, 0.0f),   glm::vec2(0.0f, 1.0f)},
+            {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(-1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(1.0f, -1.0f, 0.0f),  glm::vec2(1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(0.0f, 1.0f, 0.0f),   glm::vec2(0.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
     };
     VertexData triangles_rect[] = {
-            {glm::vec3(-0.75f, -0.75f, 0.0f), glm::vec2(0.0f, -0.75f)},
-            {glm::vec3(0.75f, -0.75f, 0.0f),  glm::vec2(0.75f, -0.75f)},
-            {glm::vec3(-0.75f, 0.75f, 0.0f),  glm::vec2(-0.75f, 0.75f)},
-            {glm::vec3(0.75f, 0.75f, 0.0f),   glm::vec2(0.75f, 0.75f)},
+            {glm::vec3(-0.75f, -0.75f, 0.0f), glm::vec2(0.0f, -0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(0.75f, -0.75f, 0.0f),  glm::vec2(0.75f, -0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(-0.75f, 0.75f, 0.0f),  glm::vec2(-0.75f, 0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(0.75f, 0.75f, 0.0f),   glm::vec2(0.75f, 0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
     };
 
     std::vector<graphics::GeometryBuffer *> buffers = {};
@@ -174,14 +176,7 @@ int main(int argc, char *argv[]) {
     program.attach(fragmentShader);
     program.link();
     program.use();
-
-    const glm::vec4 rightVector = {1.0f, 0.0f, 0.0f, 0.0f};
-    const glm::vec4 forwardVector = {0.0f, 0.0f, 1.0f, 0.0f};
-    const glm::vec4 upVector = {0.0f, 1.0f, 0.0f, 0.0f};
-    glm::vec4 cameraPosition = {0.0f, 0.0f, -3.0f, 0.0f};
-    glm::vec4 cameraForwardVector = forwardVector;
-    glm::vec4 cameraUpVector = upVector;
-    glm::vec4 cameraRightVector = rightVector;
+    
     const float cameraStep = 0.05f;
     const float cameraPitchSensitivity = 0.5f;
     const float cameraYawSensitivity = 0.5f;
@@ -189,7 +184,6 @@ int main(int argc, char *argv[]) {
     float cameraPitch = 0.0f;
     float cameraYaw = 0.0f;
     float cameraRoll = 0.0f;
-    glm::mat4 worldToCameraMatrix;
     GLint worldToCameraMatrixID = glGetUniformLocation(program.getID(), "world_to_camera_matrix");
 
     GLint cameraPositionShaderID = glGetUniformLocation(program.getID(), "camera_position");
@@ -228,11 +222,6 @@ int main(int argc, char *argv[]) {
             buffers.push_back(buffer);
         }
         if (input::InputManager::isKeyPressed(input::Key::S)) {
-            /*std::cout << "floating triangles: " << meshStripData->floatingTriangles.size() << std::endl;
-            std::cout << "triangle strips: " << meshStripData->triangleStrips.size() << std::endl;
-            for (const auto &triStrip: meshStripData->triangleStrips) {
-                std::cout << "  vertices: " << triStrip.vertexIndices.size() << std::endl;
-            }*/
             buffers.clear();
 
             if (input::InputManager::isKeyPressed(input::Key::Num1)) {
@@ -273,30 +262,28 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        float rightInput = 0.0f;
+        float forwardInput = 0.0f;
+        float upInput = 0.0f;
         if (input::InputManager::isKeyPressed(input::Key::KP_8)) {
-            cameraPosition += cameraForwardVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            forwardInput += cameraStep;
         }
         if (input::InputManager::isKeyPressed(input::Key::KP_2)) {
-            cameraPosition -= cameraForwardVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            forwardInput -= cameraStep;
         }
         if (input::InputManager::isKeyPressed(input::Key::KP_6)) {
-            cameraPosition += cameraRightVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            rightInput += cameraStep;
         }
         if (input::InputManager::isKeyPressed(input::Key::KP_4)) {
-            cameraPosition -= cameraRightVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            rightInput -= cameraStep;
         }
         if (input::InputManager::isKeyPressed(input::Key::KP_9)) {
-            cameraPosition += cameraUpVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            upInput += cameraStep;
         }
         if (input::InputManager::isKeyPressed(input::Key::KP_3)) {
-            cameraPosition -= cameraUpVector * cameraStep;
-            std::cout << "camera position: " << cameraPosition[0] << " / " << cameraPosition[1] << " / " << cameraPosition[2] << std::endl;
+            upInput -= cameraStep;
         }
+        camera.moveRelative(rightInput, upInput, forwardInput);
 
         float cursorDeltaX = currentCursorPos.x - prevCursorPos.x;
         float cursorDeltaY = currentCursorPos.y - prevCursorPos.y;
@@ -316,18 +303,8 @@ int main(int argc, char *argv[]) {
                 cameraPitch = -90.0f;
             }
         }
+        camera.setRotation(cameraYaw, cameraPitch, cameraRoll);
 
-        // update camera up/forward/right vectors according to camera rotation
-        // apply yaw, then pitch, then roll
-        auto identityMat4 = glm::identity<glm::mat4>();
-        auto yawRotationMatrix = glm::rotate(identityMat4, glm::radians(cameraYaw), glm::vec3(cameraUpVector));
-        cameraRightVector = yawRotationMatrix * rightVector;
-        auto pitchRotationMatrix = glm::rotate(identityMat4, glm::radians(cameraPitch), glm::vec3(cameraRightVector));
-        cameraForwardVector = pitchRotationMatrix * yawRotationMatrix * forwardVector;
-        auto rollRotationMatrix = glm::rotate(identityMat4, glm::radians(cameraRoll), glm::vec3(cameraForwardVector));
-        cameraRightVector = rollRotationMatrix * cameraRightVector;
-        cameraUpVector = rollRotationMatrix * pitchRotationMatrix * upVector;
-        
         glUniform3fv(glsl_ambient_light, 1, glm::value_ptr(ambientLightData));
 
         // TODO create a function for binding lightData
@@ -338,16 +315,9 @@ int main(int argc, char *argv[]) {
         glUniform1f(glsl_light_spot_angle, lightData.light_spot_angle);
         glUniform3fv(glsl_light_color, 1, glm::value_ptr(lightData.light_color));
         glUniform1f(glsl_light_intensity, lightData.light_intensity);
-
-        auto lookAtMatrix = glm::lookAt(glm::vec3(cameraPosition), glm::vec3(cameraPosition + cameraForwardVector), glm::vec3(cameraUpVector));
-        // fix x direction
-        lookAtMatrix[0][0] *= -1.0f;
-        lookAtMatrix[1][0] *= -1.0f;
-        lookAtMatrix[2][0] *= -1.0f;
-        lookAtMatrix[3][0] *= -1.0f;
-        worldToCameraMatrix = camera.getViewProjection() * lookAtMatrix;
-        glUniformMatrix4fv(worldToCameraMatrixID, 1, GL_FALSE, glm::value_ptr(worldToCameraMatrix));
-        glUniform3fv(cameraPositionShaderID, 1, glm::value_ptr(cameraPosition));
+        
+        glUniformMatrix4fv(worldToCameraMatrixID, 1, GL_FALSE, glm::value_ptr(camera.getWorldToCamera()));
+        glUniform3fv(cameraPositionShaderID, 1, glm::value_ptr(camera.getPosition()));
         for (const auto &buffer: buffers) {
             buffer->draw();
         }

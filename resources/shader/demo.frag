@@ -36,8 +36,8 @@ void main()
     // TODO light bounces? occlusion?
     if (light_type == LIGHT_TYPE_DIRECTIONAL){
         // direction, color, intensity
-        diffuseColor = max(phongData.g * dot(-light_direction, normal_vec_frag) * light_color, 0f);
-        specularColor = max(phongData.b * pow(dot(reflect(light_direction, normal_vec_frag), normalize(camera_position - render_position_frag)), phongData.a * 255) * light_color, 0f);
+        diffuseColor = max(phongData.g * dot(-light_direction, normal_vec_frag) * light_color, 0f) * light_intensity;
+        specularColor = max(phongData.b * 8 * pow(dot(reflect(light_direction, normal_vec_frag), normalize(camera_position - render_position_frag)), phongData.a * 255) * light_color, 0f) * light_intensity;
     } else if (light_type == LIGHT_TYPE_SPOT){
         // TODO implement spot lights
     } else if (light_type == LIGHT_TYPE_POINT){
@@ -45,5 +45,5 @@ void main()
     }
     
     out_color = texColor * vec4(ambientColor + diffuseColor + specularColor, 1f);
-    //out_color = vec4(normal_vec_frag, 1f);
+    //out_color = vec4(specularColor, 1f);
 }
