@@ -43,7 +43,7 @@ void main()
     } else if (light_type == LIGHT_TYPE_POINT){
         // TODO implement point lights
     }
-    
+
     out_color = texColor * vec4(ambientColor + diffuseColor + specularColor, 1f);
     //out_color = vec4(specularColor, 1f);
 }

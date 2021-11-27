@@ -15,7 +15,7 @@ void main()
     //gl_Position = vec4(in_position, 1f);
     gl_Position = world_to_camera_matrix * vec4(in_position, 1f);
     render_position_frag = in_position;
-    
+
     uv_coord_frag = uv_coord;
     normal_vec_frag = normal_vec;
 }
