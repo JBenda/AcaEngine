@@ -22,7 +22,7 @@ namespace graphics {
         glUniform3fv(glsl_light_position, 1, glm::value_ptr(light_position));
         glUniform3fv(glsl_light_direction, 1, glm::value_ptr(light_direction));
         glUniform1f(glsl_light_range, light_range);
-        glUniform1f(glsl_light_spot_angle, light_spot_angle);
+        glUniform1f(glsl_light_spot_angle, light_type == LightType::spot ? glm::cos(glm::radians(light_spot_angle)) : 0.0f);
         glUniform3fv(glsl_light_color, 1, glm::value_ptr(light_color));
         glUniform1f(glsl_light_intensity, light_intensity);
     }
