@@ -67,10 +67,24 @@ int main(int argc, char *argv[]) {
     input::InputManager::setCursorMode(input::InputManager::CursorMode::NORMAL);
 
     glm::vec3 ambientLightData = {0.7f, 0.7f, 0.7f};
-    graphics::LightData lightData = graphics::LightData::directional(
+    /*graphics::LightData lightData = graphics::LightData::directional(
             glm::normalize(glm::vec3(-1.0f, -1.0f, 0.5f)),
             glm::vec3(1.0f, 1.0f, 1.0f),
-            2.0f);
+            2.0f);*/
+    /*graphics::LightData lightData = graphics::LightData::point(
+            glm::vec3(3.0f, 0.0f, 0.0f),
+            10.0f,
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            5.0f
+    );*/
+    graphics::LightData lightData = graphics::LightData::spot(
+            glm::vec3(3.0f, 0.0f, 0.0f),
+            glm::vec3(-1.0f, 0.0f, 0.0f),
+            10.0f,
+            10.0f,
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            5.0f
+            );
 
     graphics::Camera camera(90.0f, 0.1f, 300.0f);
     camera.setPosition(glm::vec3(0.0f, 0.0f, -3.0f));
@@ -132,7 +146,7 @@ int main(int argc, char *argv[]) {
     program.attach(fragmentShader);
     program.link();
     program.use();
-    
+
     lightData.bindData(program.getID());
 
     const float cameraStep = 0.05f;
@@ -253,6 +267,35 @@ int main(int argc, char *argv[]) {
             }
         }
         camera.setRotation(cameraYaw, cameraPitch, cameraRoll);
+
+        bool lightChanged = false;
+        if (input::InputManager::isKeyPressed(input::Key::J)){
+            lightData.light_position += glm::vec3(-0.05f, 0.0f, 0.0f);
+            lightChanged = true;
+        }
+        if (input::InputManager::isKeyPressed(input::Key::L)){
+            lightData.light_position += glm::vec3(0.05f, 0.0f, 0.0f);
+            lightChanged = true;
+        }
+        if (input::InputManager::isKeyPressed(input::Key::I)){
+            lightData.light_position += glm::vec3(0.0f, 0.05f, 0.0f);
+            lightChanged = true;
+        }
+        if (input::InputManager::isKeyPressed(input::Key::K)){
+            lightData.light_position += glm::vec3(0.0f, -0.05f, 0.0f);
+            lightChanged = true;
+        }
+        if(input::InputManager::isKeyPressed(input::Key::U)){
+            lightData.light_spot_angle -= 0.1f;
+            lightChanged = true;
+        }
+        if(input::InputManager::isKeyPressed(input::Key::O)){
+            lightData.light_spot_angle += 0.1f;
+            lightChanged = true;
+        }
+        if(lightChanged){
+            lightData.bindData(program.getID());
+        }
 
         glUniform3fv(glsl_ambient_light, 1, glm::value_ptr(ambientLightData));
         glUniformMatrix4fv(worldToCameraMatrixID, 1, GL_FALSE, glm::value_ptr(camera.getWorldToCamera()));
