@@ -59,7 +59,7 @@ namespace graphics {
 
         static constexpr LightData spot(glm::vec3 position, glm::vec3 direction, float range, float spotAngle, glm::vec3 lightColor, float lightIntensity) {
             return LightData{
-                    LightType::directional,
+                    LightType::spot,
                     position,
                     direction,
                     range,
@@ -71,7 +71,7 @@ namespace graphics {
 
         static constexpr LightData point(glm::vec3 position, float range, glm::vec3 lightColor, float lightIntensity) {
             return LightData{
-                    LightType::directional,
+                    LightType::point,
                     position,
                     glm::vec3(0.0f, 0.0f, 0.0f),
                     range,
