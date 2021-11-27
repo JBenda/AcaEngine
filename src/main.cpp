@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <engine/utils/meshstripper.hpp>
+#include <engine/graphics/lightdata.h>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/resources.hpp>
 
@@ -17,7 +18,6 @@
 #define _CRTDBG_MAP_ALLOC
 
 #include <crtdbg.h>
-#include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
 #endif
@@ -51,46 +51,6 @@ struct VertexData {
     glm::vec3 normalData;
 };
 
-enum LightType : int {
-    directional = 0,
-    spot = 1,
-    point = 2
-};
-
-struct LightData {
-    /**
-     * Directional Light:
-     *   position     -
-     *   direction    direction the light is emitted in
-     *   range        -
-     *   spot_angle   -
-     *   color        color of the emitted light
-     *   intensity    simple multiplier for emitted light
-     * Spot-Light:
-     *   position     position of the light source in world space
-     *   direction    direction the spot-light is facing
-     *   range        maximum range of emitted light
-     *   spot_angle   max angle the light is emitted at in degrees (e.g. 5° means light is emitted in a cone of 2.5° from the spot-light's direction)
-     *   color        color of the emitted light
-     *   intensity    resulting light-intensity at a given point is `intensity * ( 1 - ([point_to_light_distance] / [range]) )²`
-     * Point-Light:
-     *   position     position of the light source in world space
-     *   direction    -
-     *   range        maximum range of emitted light
-     *   spot_angle   -
-     *   color        color of the emitted light
-     *   intensity    resulting light-intensity at a given point is `intensity * ( 1 - ([point_to_light_distance] / [range]) )²`
-     */
-
-    LightType light_type;
-    glm::vec3 light_position;
-    glm::vec3 light_direction;
-    float light_range;
-    float light_spot_angle;
-    glm::vec3 light_color;
-    float light_intensity;
-};
-
 int main(int argc, char *argv[]) {
 #ifndef NDEBUG
 #if defined(_MSC_VER)
@@ -107,17 +67,13 @@ int main(int argc, char *argv[]) {
     input::InputManager::setCursorMode(input::InputManager::CursorMode::NORMAL);
 
     glm::vec3 ambientLightData = {0.7f, 0.7f, 0.7f};
-    // TODO create light type specific constructors
-    LightData lightData = {
-            LightType::directional,
-            glm::vec3(0.0f, 0.0f, 0.0f),
+    graphics::LightData lightData = graphics::LightData::directional(
             glm::normalize(glm::vec3(-1.0f, -1.0f, 0.5f)),
-            0.0f, 0.0f,
             glm::vec3(1.0f, 1.0f, 1.0f),
-            2.0f
-    };
+            2.0f);
 
     graphics::Camera camera(90.0f, 0.1f, 300.0f);
+    camera.setPosition(glm::vec3(0.0f, 0.0f, -3.0f));
     static graphics::Sampler sampler(graphics::Sampler::Filter::LINEAR, graphics::Sampler::Filter::LINEAR,
                                      graphics::Sampler::Filter::LINEAR, graphics::Sampler::Border::MIRROR);
     auto planetTexture = graphics::Texture2DManager::get("textures/planet1.png", sampler);
@@ -150,14 +106,14 @@ int main(int argc, char *argv[]) {
 
     VertexData triangles_tri[] = {
             {glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(-1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
-            {glm::vec3(1.0f, -1.0f, 0.0f),  glm::vec2(1.0f, -1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
-            {glm::vec3(0.0f, 1.0f, 0.0f),   glm::vec2(0.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(1.0f, -1.0f, 0.0f),  glm::vec2(1.0f, -1.0f),  glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(0.0f, 1.0f, 0.0f),   glm::vec2(0.0f, 1.0f),   glm::vec3(0.0f, 0.0f, -1.0f)},
     };
     VertexData triangles_rect[] = {
-            {glm::vec3(-0.75f, -0.75f, 0.0f), glm::vec2(0.0f, -0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(-0.75f, -0.75f, 0.0f), glm::vec2(0.0f, -0.75f),  glm::vec3(0.0f, 0.0f, -1.0f)},
             {glm::vec3(0.75f, -0.75f, 0.0f),  glm::vec2(0.75f, -0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
             {glm::vec3(-0.75f, 0.75f, 0.0f),  glm::vec2(-0.75f, 0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
-            {glm::vec3(0.75f, 0.75f, 0.0f),   glm::vec2(0.75f, 0.75f), glm::vec3(0.0f, 0.0f, -1.0f)},
+            {glm::vec3(0.75f, 0.75f, 0.0f),   glm::vec2(0.75f, 0.75f),  glm::vec3(0.0f, 0.0f, -1.0f)},
     };
 
     std::vector<graphics::GeometryBuffer *> buffers = {};
@@ -177,6 +133,8 @@ int main(int argc, char *argv[]) {
     program.link();
     program.use();
     
+    lightData.bindData(program.getID());
+
     const float cameraStep = 0.05f;
     const float cameraPitchSensitivity = 0.5f;
     const float cameraYawSensitivity = 0.5f;
@@ -188,15 +146,6 @@ int main(int argc, char *argv[]) {
 
     GLint cameraPositionShaderID = glGetUniformLocation(program.getID(), "camera_position");
     GLint glsl_ambient_light = glGetUniformLocation(program.getID(), "ambient_light");
-
-    // TODO create a function for binding lightData
-    GLint glsl_light_type = glGetUniformLocation(program.getID(), "light_type");
-    GLint glsl_light_position = glGetUniformLocation(program.getID(), "light_position");
-    GLint glsl_light_direction = glGetUniformLocation(program.getID(), "light_direction");
-    GLint glsl_light_range = glGetUniformLocation(program.getID(), "light_range");
-    GLint glsl_light_spot_angle = glGetUniformLocation(program.getID(), "light_spot_angle");
-    GLint glsl_light_color = glGetUniformLocation(program.getID(), "light_color");
-    GLint glsl_light_intensity = glGetUniformLocation(program.getID(), "light_intensity");
 
     graphics::glCall(glEnable, GL_DEPTH_TEST);
     graphics::glCall(glClearColor, 0.05f, 0.0f, 0.05f, 1.f);
@@ -306,16 +255,6 @@ int main(int argc, char *argv[]) {
         camera.setRotation(cameraYaw, cameraPitch, cameraRoll);
 
         glUniform3fv(glsl_ambient_light, 1, glm::value_ptr(ambientLightData));
-
-        // TODO create a function for binding lightData
-        glUniform1i(glsl_light_type, lightData.light_type);
-        glUniform3fv(glsl_light_position, 1, glm::value_ptr(lightData.light_position));
-        glUniform3fv(glsl_light_direction, 1, glm::value_ptr(lightData.light_direction));
-        glUniform1f(glsl_light_range, lightData.light_range);
-        glUniform1f(glsl_light_spot_angle, lightData.light_spot_angle);
-        glUniform3fv(glsl_light_color, 1, glm::value_ptr(lightData.light_color));
-        glUniform1f(glsl_light_intensity, lightData.light_intensity);
-        
         glUniformMatrix4fv(worldToCameraMatrixID, 1, GL_FALSE, glm::value_ptr(camera.getWorldToCamera()));
         glUniform3fv(cameraPositionShaderID, 1, glm::value_ptr(camera.getPosition()));
         for (const auto &buffer: buffers) {
