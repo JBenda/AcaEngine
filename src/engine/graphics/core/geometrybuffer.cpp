@@ -42,7 +42,9 @@ namespace graphics {
 		m_indexSize(_indexed),
 		m_vertexCount(0),
 		m_indexCount(0),
-		m_instanceCount(0)
+		m_instanceCount(0),
+        m_vao(0),
+        m_vbo(0)
 	{
 		// Analyze vertex data (vertexsize, instancesize)
 		for(int i = 0; i < _numAttributes; ++i)
@@ -80,13 +82,13 @@ namespace graphics {
 			glCall(glBufferData, GL_ARRAY_BUFFER, m_instanceCapacity, nullptr, GL_STATIC_DRAW);
 
 			// Bind Attributes
-			unsigned offset = 0;
+			unsigned offset2 = 0;
 			for(int i = 0; i < _numAttributes; ++i) if(_attributes[i].perInstance)
 			{
 				// Also set this attribute to be instanced
 				glCall(glVertexAttribDivisor, attribIndex, 1);
-				enableAttribute(attribIndex++, _attributes[i], m_instanceVertexSize, offset);
-				offset += attributeSize(_attributes[i]);
+				enableAttribute(attribIndex++, _attributes[i], m_instanceVertexSize, offset2);
+                offset2 += attributeSize(_attributes[i]);
 			}
 		}
 
